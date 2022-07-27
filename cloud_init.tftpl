@@ -20,16 +20,16 @@ write_files:
     #!/bin/bash
 
     #rpm-based
-    if [ -d /etc/sysconfig/network-scripts ]; then
-      cfg_name=$( grep -lri BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-* | cut -d ':' -f1 )
-      sed -i 's/dhcp/static/gi' "$cfg_name"
-      sed -i -e '/IPADDR/Id' -e '$ a IPADDR=${ip}' "$cfg_name"
-      sed -i -e '/DNS1/Id' -e '$ a DNS1=192.168.122.1' "$cfg_name"
-      sed -i -e '/GATEWAY/Id' -e '$ a GATEWAY=192.168.122.1' "$cfg_name"
-      sed -i -e '/NETMASK/Id' -e '/PREFIX/Id' -e '$ a PREFIX=24' "$cfg_name"
-      sed -i -e '/DEFROUTE/Id' -e '$ a DEFROUTE=yes' "$cfg_name"
-      sed -i -e '/IPV6/s/yes/no/gi' -e '/IPV6_DISABLED/Id' -e '$ a IPV6_DISABLED=yes' "$cfg_name"
-    fi
+    %{ for net in nets }
+    cfg_name="/etc/sysconfig/network-scripts/ifcfg-${net.dev}"
+    sed -i 's/dhcp/static/gi' "$cfg_name"
+    sed -i -e '/IPADDR/Id' -e '$ a IPADDR=${net.ip}' "$cfg_name"
+    sed -i -e '/DNS1/Id' -e '$ a DNS1=${net.dns}' "$cfg_name"
+    sed -i -e '/GATEWAY/Id' -e '$ a GATEWAY=${net.gw}' "$cfg_name"
+    sed -i -e '/NETMASK/Id' -e '/PREFIX/Id' -e '$ a PREFIX=${net.prfx}' "$cfg_name"
+    sed -i -e '/DEFROUTE/Id' -e '$ a DEFROUTE=yes' "$cfg_name"
+    sed -i -e '/IPV6/s/yes/no/gi' -e '/IPV6_DISABLED/Id' -e '$ a IPV6_DISABLED=yes' "$cfg_name"
+    %{ endfor ~}
     rm -vf $(readlink -f $0)
   path: /root/net-setup.sh
   permissions: '0755'
@@ -40,6 +40,5 @@ growpart:
 
 runcmd:
  - sed  -i '/PermitRootLogin/s/.*/PermitRootLogin yes/' /etc/ssh/sshd_config
- - systemctl restart sshd
  - /root/net-setup.sh
  - reboot

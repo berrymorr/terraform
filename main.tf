@@ -19,8 +19,7 @@ locals {
 
 resource "libvirt_volume" "os_image" {
   name   = "os_image"
-  #source = "/root/CentOS-7-x86_64-GenericCloud.qcow2"
-  source = "/root/almacloud8.qcow2"
+  source = local.source_image
   pool = local.pool
 }
 
@@ -29,7 +28,7 @@ resource "libvirt_cloudinit_disk" "commoninit" {
   for_each = { for vm in local.vms : (vm.name) => vm }
   name      = "${each.value.name}.iso"
   pool      = local.pool
-  user_data = templatefile("${path.module}/cloud_init.tftpl", {fqdn = each.value.name, ip = each.value.ip})
+  user_data = templatefile("${path.module}/cloud_init.tftpl", {fqdn = each.value.name, nets = each.value.nets})
 }
 
 
@@ -55,11 +54,14 @@ resource "libvirt_domain" "domain" {
     }
   }
 
-  network_interface {
-    network_name   = local.network.name
-    bridge         = local.network.bridge
-    addresses      = [each.value.ip]
-    wait_for_lease = false
+  dynamic "network_interface" {
+    for_each = each.value.nets
+    content {
+      network_name   = network_interface.value.name
+      bridge         = network_interface.value.br
+      addresses      = [network_interface.value.ip]
+      wait_for_lease = false
+    }
   }
 
   cloudinit = libvirt_cloudinit_disk.commoninit["${each.value.name}"].id
