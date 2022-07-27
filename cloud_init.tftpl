@@ -21,7 +21,7 @@ write_files:
 
     #rpm-based
     if [ -d /etc/sysconfig/network-scripts ]; then
-      cfg_name=$( grep -ri BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-* | cut -d ':' -f1 )
+      cfg_name=$( grep -lri BOOTPROTO /etc/sysconfig/network-scripts/ifcfg-* | cut -d ':' -f1 )
       sed -i 's/dhcp/static/gi' "$cfg_name"
       sed -i -e '/IPADDR/Id' -e '$ a IPADDR=${ip}' "$cfg_name"
       sed -i -e '/DNS1/Id' -e '$ a DNS1=192.168.122.1' "$cfg_name"
