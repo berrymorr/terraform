@@ -28,7 +28,7 @@ resource "libvirt_cloudinit_disk" "commoninit" {
   for_each = { for vm in local.vms : (vm.name) => vm }
   name      = "${each.value.name}.iso"
   pool      = local.pool
-  user_data = templatefile("${path.module}/cloud_init.tftpl", {fqdn = each.value.name, nets = each.value.nets})
+  user_data = templatefile("${path.module}/cloud_init.tftpl", {fqdn=each.value.name, nets=each.value.nets, ssh_key=local.ssh_key})
 }
 
 

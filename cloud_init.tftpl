@@ -5,7 +5,7 @@ fqdn: ${fqdn}
 users:
   - name: root
     ssh_authorized_keys:
-      - ${file("/root/.ssh/id_rsa.pub")}
+      - ${ssh_key}
 
 
 ssh_pwauth: True
@@ -20,15 +20,37 @@ write_files:
     #!/bin/bash
 
     #rpm-based
-    %{ for net in nets }
+    %{ for i,net in nets }
     cfg_name="/etc/sysconfig/network-scripts/ifcfg-${net.dev}"
-    sed -i 's/dhcp/static/gi' "$cfg_name"
-    sed -i -e '/IPADDR/Id' -e '$ a IPADDR=${net.ip}' "$cfg_name"
-    sed -i -e '/DNS1/Id' -e '$ a DNS1=${net.dns}' "$cfg_name"
-    sed -i -e '/GATEWAY/Id' -e '$ a GATEWAY=${net.gw}' "$cfg_name"
-    sed -i -e '/NETMASK/Id' -e '/PREFIX/Id' -e '$ a PREFIX=${net.prfx}' "$cfg_name"
-    sed -i -e '/DEFROUTE/Id' -e '$ a DEFROUTE=yes' "$cfg_name"
-    sed -i -e '/IPV6/s/yes/no/gi' -e '/IPV6_DISABLED/Id' -e '$ a IPV6_DISABLED=yes' "$cfg_name"
+
+    grep -qxF 'DEVICE' "$cfg_name" || echo 'DEVICE=${net.dev}' >> "$cfg_name"
+
+    sed -i -e '/BOOTPROTO/Id' "$cfg_name"
+    echo 'BOOTPROTO=static' >> "$cfg_name"
+
+    sed -i -e '/IPADDR/Id' "$cfg_name"
+    echo 'IPADDR=${net.ip}' >> "$cfg_name"
+
+    sed -i -e '/DNS1/Id' "$cfg_name" 
+    echo 'DNS1=${net.dns}' >> "$cfg_name"
+
+    sed -i -e '/GATEWAY/Id' "$cfg_name"
+    echo 'GATEWAY=${net.gw}' >> "$cfg_name"
+
+    sed -i -e '/NETMASK/Id' "$cfg_name"
+    sed -i -e '/PREFIX/Id' "$cfg_name" 
+    echo 'PREFIX=${net.prfx}' >> "$cfg_name"
+
+    sed -i -e '/DEFROUTE/Id' "$cfg_name"
+    %{ if i==0 }
+    echo 'DEFROUTE=yes' >> "$cfg_name"
+    %{ else }
+    echo 'DEFROUTE=no' >> "$cfg_name"
+    %{ endif }
+
+    sed -i -e '/IPV6/s/yes/no/gi' "$cfg_name"
+    sed -i -e '/IPV6_DISABLED/Id' "$cfg_name"
+    echo 'IPV6_DISABLED=yes' >> "$cfg_name"
     %{ endfor ~}
     rm -vf $(readlink -f $0)
   path: /root/net-setup.sh

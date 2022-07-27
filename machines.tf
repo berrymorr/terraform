@@ -3,6 +3,7 @@ locals {
   pool = "default"
   #source_image = "/root/CentOS-7-x86_64-GenericCloud.qcow2"
   source_image = "/root/almacloud8.qcow2"
+  ssh_key = file("/root/.ssh/id_rsa.pub")
   vms = [
     { name="server-1", cores=4, mem=4096, disks=[10], nets=[
       {name="default", br="virbr0", dev="eth0", ip="192.168.122.21", prfx="24", dns="192.168.122.1", gw="192.168.122.1"}
