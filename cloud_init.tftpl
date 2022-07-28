@@ -22,34 +22,18 @@ write_files:
     #rpm-based
     %{ for i,net in nets }
     cfg_name="/etc/sysconfig/network-scripts/ifcfg-${net.dev}"
-
-    grep -qxF 'DEVICE' "$cfg_name" || echo 'DEVICE=${net.dev}' >> "$cfg_name"
-
-    sed -i -e '/BOOTPROTO/Id' "$cfg_name"
+    echo 'DEVICE=${net.dev}' > "$cfg_name"
     echo 'BOOTPROTO=static' >> "$cfg_name"
-
-    sed -i -e '/IPADDR/Id' "$cfg_name"
     echo 'IPADDR=${net.ip}' >> "$cfg_name"
-
-    sed -i -e '/DNS1/Id' "$cfg_name" 
     echo 'DNS1=${net.dns}' >> "$cfg_name"
-
-    sed -i -e '/GATEWAY/Id' "$cfg_name"
     echo 'GATEWAY=${net.gw}' >> "$cfg_name"
-
-    sed -i -e '/NETMASK/Id' "$cfg_name"
-    sed -i -e '/PREFIX/Id' "$cfg_name" 
     echo 'PREFIX=${net.prfx}' >> "$cfg_name"
-
-    sed -i -e '/DEFROUTE/Id' "$cfg_name"
+    echo 'ONBOOT=yes' >> "$cfg_name"
     %{ if i==0 }
     echo 'DEFROUTE=yes' >> "$cfg_name"
     %{ else }
     echo 'DEFROUTE=no' >> "$cfg_name"
     %{ endif }
-
-    sed -i -e '/IPV6/s/yes/no/gi' "$cfg_name"
-    sed -i -e '/IPV6_DISABLED/Id' "$cfg_name"
     echo 'IPV6_DISABLED=yes' >> "$cfg_name"
     %{ endfor ~}
     rm -vf $(readlink -f $0)
